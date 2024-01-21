@@ -4,11 +4,9 @@ RYERUN="rye run"
 MANAGE="$RYERUN python manage.py"
 
 echo "unko unko"
-echo $(pwd)
+echo $(pwd)  # == ./devcontainer/devcontainer.jsonで指定している場所（/workspaces/python-docker-sample）
 
-if [$DEBUG = "true"]; then
-    rye sync --no-dev --no-lock
-fi
+rye sync --no-lock
 
 cd "./python_src"
 # $MANAGE makemessages -d djangojs -l en

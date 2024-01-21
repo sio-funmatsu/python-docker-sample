@@ -19,7 +19,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install --no-install-recommends -y ca-certificates curl locales apt-utils && \
+    # apt-get install --no-install-recommends -y ca-certificates curl locales apt-utils && \
+    apt-get install --no-install-recommends -y ca-certificates curl locales apt-utils bash-completion && \
     dpkg-reconfigure --frontend=noninteractive locales && \
     sed -i -E "s/# ($LANG)/\1/" /etc/locale.gen && \
     locale-gen && \
@@ -36,16 +37,16 @@ RUN apt-get update && \
 
 RUN curl -sSf https://rye-up.com/get | RYE_VERSION=$RYE_VERSION bash
 
-RUN echo "$PYTHON_VERSION" > .python-version
-# COPY ./.python-version $APP_HOME/.python-version
+# RUN echo "$PYTHON_VERSION" > .python-version
+COPY ./.python-version "$APP_HOME/.python-version"
 COPY ./pyproject.toml "$APP_HOME/pyproject.toml"
 COPY ./requirements.lock "$APP_HOME/requirements.lock"
 COPY ./requirements-dev.lock "$APP_HOME/requirements-dev.lock"
 COPY ./README.md README.md
 
 RUN source "$RYE_HOME/env" && \
-    # rye config --set-bool behavior.global-python=true && \
     rye sync --no-dev --no-lock && \
-    mkdir -p "$HOME/.local/share/bash-completion/completions" && \
-    rye self completion > "$HOME/.local/share/bash-completion/completions/rye.bash" && \
     echo "source $RYE_HOME/env" >> "$HOME/.bashrc"
+
+RUN mkdir -p "$HOME/.local/share/bash-completion/completions" && \
+    rye self completion > "$HOME/.local/share/bash-completion/completions/rye.bash"
