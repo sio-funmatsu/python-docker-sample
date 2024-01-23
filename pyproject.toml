@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">= 3.8"
 
 [project.scripts]
-hello = "hoge:hello"
+main = "hoge:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -28,3 +28,7 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["dist/hoge"]
+
+[tool.rye.scripts]
+dev_server = { cmd = "python manage.py runserver 0.0.0.0:8000" }
+server = { cmd = "uvicorn config.asgi:application --host 0.0.0.0 --port 8000" }

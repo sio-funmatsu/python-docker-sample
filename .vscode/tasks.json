@@ -6,7 +6,7 @@
         {
             "label": "setup-script",
             "type": "shell",
-            "command": "/app/scripts/debug_setup.sh"
+            "command": "/workspaces/python-docker-sample/scripts/debug_setup.sh"
         }
     ]
 }

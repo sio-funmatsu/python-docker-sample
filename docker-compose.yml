@@ -3,10 +3,20 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
+      target: development
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
     working_dir: "/app/"
+    volumes:
+      # - .:/app
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+      # - ./docker:/app/docker
+      # - ./docker-compose.yml:/app/docker-compose.yml
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./README.md:/app/README.md
+      - ./requirements.lock:/app/requirements.lock
+      - ./requirements-dev.lock:/app/requirements-dev.lock
+      - ./.python-version:/app/.python-version
     command: ["./scripts/run.sh"]
     # tty: true

@@ -1,52 +1,78 @@
-FROM debian:trixie-slim
+#-----------------------------------------------------------------------------#
+# base image                                                                  #
+#-----------------------------------------------------------------------------#
+FROM python:3-slim AS base
 
-ENV LANG="en_US.UTF-8"
+# Warning抑制用
+ENV DEBIAN_FRONTEND="noninteractive"
+ENV DEBCONF_NOWARNINGS="yes"
 
-ENV APP_HOME="/app"
+# locale用
+ARG LANG
+ENV LANG=${LANG:-"en_US.UTF-8"}
 
-ENV PYTHON_VERSION="3.12"
+# python用
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-ENV RYE_VERSION="0.18.0"
-ENV RYE_HOME="/opt/rye"
-ENV PATH="$RYE_HOME/shims:$PATH"
-ENV RYE_INSTALL_OPTION="--yes"
+# localeの設定と必要なパッケージのインストール
+RUN apt-get update \
+ && apt-get install --no-install-recommends -y \
+    locales \
+    apt-utils \
+    ca-certificates \
+    curl \
+ && apt-get clean -y \
+ && rm -rf /var/lib/apt/lists/*
 
-WORKDIR $APP_HOME
+#-----------------------------------------------------------------------------#
+# initialized rye image                                                       #
+#-----------------------------------------------------------------------------#
+FROM base AS rye-base
 
+# bashに変更
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    # apt-get install --no-install-recommends -y ca-certificates curl locales apt-utils && \
-    apt-get install --no-install-recommends -y ca-certificates curl locales apt-utils bash-completion && \
-    dpkg-reconfigure --frontend=noninteractive locales && \
-    sed -i -E "s/# ($LANG)/\1/" /etc/locale.gen && \
-    locale-gen && \
-    update-locale LANG=$LANG && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# ryeのインストールオプション
+ENV RYE_HOME="/opt/rye"
+ENV PATH="$RYE_HOME/shims:$PATH"
 
-# ENV RYEFILE="rye-x86_64-linux"
-# RUN curl -sSL https://github.com/mitsuhiko/rye/releases/download/$RYE_VERSION/$RYEFILE.gz -o $RYEFILE.gz && \
-#     gunzip $RYEFILE.gz && \
-#     chmod +x $RYEFILE && \
-#     ./$RYEFILE self install --yes && \
-#     rm -rf $RYEFILE
+# ryeのインストール
+RUN curl -sSf https://rye-up.com/get | RYE_NO_AUTO_INSTALL=1 RYE_INSTALL_OPTION="--yes" bash
 
-RUN curl -sSf https://rye-up.com/get | RYE_VERSION=$RYE_VERSION bash
+# 作業ディレクトリの設定
+ARG APP_HOME
+ENV APP_HOME=${APP_HOME:-"/app"}
+WORKDIR $APP_HOME
 
-# RUN echo "$PYTHON_VERSION" > .python-version
-COPY ./.python-version "$APP_HOME/.python-version"
-COPY ./pyproject.toml "$APP_HOME/pyproject.toml"
-COPY ./requirements.lock "$APP_HOME/requirements.lock"
-COPY ./requirements-dev.lock "$APP_HOME/requirements-dev.lock"
-COPY ./README.md README.md
+ENV PYTHONPATH="$APP_HOME/src:$PYTHONPATH"
 
-RUN source "$RYE_HOME/env" && \
-    rye sync --no-dev --no-lock && \
-    echo "source $RYE_HOME/env" >> "$HOME/.bashrc"
+# ryeに必要なファイルのコピー、targetは最終行のディレクトリ($APP_HOME)
+COPY .python-version \
+     pyproject.toml \
+     requirements.lock \
+     requirements-dev.lock \
+     README.md \
+     $APP_HOME/
 
-RUN mkdir -p "$HOME/.local/share/bash-completion/completions" && \
-    rye self completion > "$HOME/.local/share/bash-completion/completions/rye.bash"
+# COPYの代わりにこちらを実行するにはbuildxが必要
+# RUN --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+#     --mount=type=bind,source=requirements.lock,target=requirements.lock \
+#     --mount=type=bind,source=requirements-dev.lock,target=requirements-dev.lock \
+#     --mount=type=bind,source=.python-version,target=.python-version \
+#     --mount=type=bind,source=README.md,target=README.md \
+#     rye sync --no-dev --no-lock
+
+#-----------------------------------------------------------------------------#
+# development image                                                           #
+#-----------------------------------------------------------------------------#
+FROM rye-base AS development
+
+# ryeの補完を有効にする
+RUN apt-get update \
+ && apt-get install --no-install-recommends -y bash-completion \
+ && apt-get clean -y \
+ && rm -rf /var/lib/apt/lists/* \
+ && mkdir -p "$HOME/.local/share/bash-completion/completions" \
+ && rye self completion > "$HOME/.local/share/bash-completion/completions/rye.bash" \
+ && echo "source /etc/bash_completion" >> "$HOME/.bashrc"

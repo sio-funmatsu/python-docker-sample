@@ -8,14 +8,12 @@
             "name": "Python: Django",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/python_src/manage.py",
+            "program": "${workspaceFolder}/src/manage.py",
             "args": [
                 "runserver",
                 "0.0.0.0:8000",
             ],
-            "env": {
-                "DEBUG": "true"
-            },
+            // "env": {},
             "django": true,
             "justMyCode": false,
             "preLaunchTask": "setup-script",

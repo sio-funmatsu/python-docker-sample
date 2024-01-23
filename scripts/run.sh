@@ -3,16 +3,17 @@
 RYERUN="rye run"
 MANAGE="$RYERUN python manage.py"
 
-# echo $(pwd) # == docker-compose.ymlのwork_dirで指定した場所(/app/python_src)
+# echo $(pwd) # == docker-compose.ymlのwork_dirで指定した場所(/app)
 
-# rye sync --no-dev --no-lock
+rye sync --no-dev --no-lock
 
-cd /app/python_src
+cd ./src
 # $MANAGE makemessages -d djangojs -l en
 # $MANAGE makemessages -l en
 # $MANAGE compilemessages
 # $MANAGE collectstatic --noinput
 # $MANAGE makemigrations
 # $MANAGE migrate
-$MANAGE runserver 0.0.0.0:8000
-# $RYERUN uvicorn config.asgi:application --host 0.0.0.0 --port 8000
+
+$RYERUN dev_server
+# $RYERUN server
