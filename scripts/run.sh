@@ -3,7 +3,7 @@
 RYERUN="rye run"
 MANAGE="$RYERUN python manage.py"
 
-# echo $(pwd) # == docker-compose.ymlのwork_dirで指定した場所(/app)
+# echo $(pwd)  # == docker-compose.ymlのwork_dirで指定した場所(/app)
 
 rye sync --no-dev --no-lock
 
